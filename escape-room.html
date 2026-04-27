@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Room</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+
+  :root {
+    --bg: #1a1610;
+    --paper: #f0e8d5;
+    --ink: #1a1610;
+    --accent: #8b2020;
+    --muted: #6b5e4a;
+    --correct: #2d6a2d;
+    --wrong: #8b2020;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Courier Prime', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; width: 100%; max-width: 520px; }
+  .page.active { display: block; }
+
+  /* ── PAPER CARD ── */
+  .card {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 2px;
+    padding: 48px 44px 44px;
+    box-shadow: 6px 6px 0 #000, 12px 12px 0 rgba(0,0,0,0.3);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 32px;
+    width: 2px; height: 100%;
+    background: rgba(139,32,32,0.3);
+  }
+
+  h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 36px;
+  }
+
+  /* ── PUZZLE BUTTONS ── */
+  .puzzle-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .puzzle-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: none;
+    border: 1.5px solid var(--ink);
+    padding: 14px 18px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    color: var(--ink);
+    text-align: left;
+    width: 100%;
+    position: relative;
+  }
+
+  .puzzle-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .puzzle-btn .icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  .puzzle-btn .check {
+    margin-left: auto;
+    color: var(--correct);
+    font-size: 1.1rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .puzzle-btn.done .check { opacity: 1; }
+  .puzzle-btn.done { border-color: var(--correct); }
+  .puzzle-btn.done:hover { background: var(--correct); color: var(--paper); }
+
+  /* ── PUZZLE PAGE ── */
+  .back-btn {
+    background: none;
+    border: none;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .back-btn:hover { color: var(--ink); }
+
+  .puzzle-title {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+  }
+
+  .puzzle-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  input[type="text"],
+  input[type="date"] {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    background: transparent;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.1rem;
+    padding: 10px 4px;
+    outline: none;
+    color: var(--ink);
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
+  }
+
+  .submit-btn {
+    margin-top: 24px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: background 0.12s;
+    display: block;
+    width: 100%;
+  }
+
+  .submit-btn:hover { background: var(--accent); }
+
+  /* ── NOTIFICATION ── */
+  .notif {
+    margin-top: 20px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    display: none;
+    border-left: 4px solid;
+  }
+
+  .notif.show { display: block; }
+  .notif.correct { color: var(--correct); border-color: var(--correct); background: rgba(45,106,45,0.08); }
+  .notif.wrong   { color: var(--wrong);   border-color: var(--wrong);   background: rgba(139,32,32,0.08); }
+</style>
+</head>
+<body>
+
+<!-- ═══ HOME PAGE ═══ -->
+<div id="page-home" class="page active">
+  <div class="card">
+    <h1>Escape Room</h1>
+    <div class="subtitle">Solve all four puzzles to escape</div>
+    <ul class="puzzle-list">
+      <li>
+        <button class="puzzle-btn" id="btn-word" onclick="goTo('word')">
+          <span class="icon">📝</span> Word Puzzle
+          <span class="check">✔</span>
+        </button>
+      </li>
+      <li>
+        <button class="puzzle-btn" id="btn-music" onclick="goTo('music')">
+          <span class="icon">🎵</span> Music Puzzle
+          <span class="check">✔</span>
+        </button>
+      </li>
+      <li>
+        <button class="puzzle-btn" id="btn-painting" onclick="goTo('painting')">
+          <span class="icon">🎨</span> Painting Puzzle
+          <span class="check">✔</span>
+        </button>
+      </li>
+      <li>
+        <button class="puzzle-btn" id="btn-calendar" onclick="goTo('calendar')">
+          <span class="icon">📅</span> Calendar Puzzle
+          <span class="check">✔</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══ WORD PUZZLE ═══ -->
+<div id="page-word" class="page">
+  <div class="card">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <div class="puzzle-title">Word Puzzle</div>
+    <div class="puzzle-subtitle">Enter the correct date</div>
+    <input type="date" id="input-word" />
+    <button class="submit-btn" onclick="check('word')">Submit Answer</button>
+    <div class="notif" id="notif-word"></div>
+  </div>
+</div>
+
+<!-- ═══ MUSIC PUZZLE ═══ -->
+<div id="page-music" class="page">
+  <div class="card">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <div class="puzzle-title">Music Puzzle</div>
+    <div class="puzzle-subtitle">Type your answer below</div>
+    <input type="text" id="input-music" placeholder="Your answer…" autocomplete="off" />
+    <button class="submit-btn" onclick="check('music')">Submit Answer</button>
+    <div class="notif" id="notif-music"></div>
+  </div>
+</div>
+
+<!-- ═══ PAINTING PUZZLE ═══ -->
+<div id="page-painting" class="page">
+  <div class="card">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <div class="puzzle-title">Painting Puzzle</div>
+    <div class="puzzle-subtitle">Type your answer below</div>
+    <input type="text" id="input-painting" placeholder="Your answer…" autocomplete="off" />
+    <button class="submit-btn" onclick="check('painting')">Submit Answer</button>
+    <div class="notif" id="notif-painting"></div>
+  </div>
+</div>
+
+<!-- ═══ CALENDAR PUZZLE ═══ -->
+<div id="page-calendar" class="page">
+  <div class="card">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <div class="puzzle-title">Calendar Puzzle</div>
+    <div class="puzzle-subtitle">Type your answer below</div>
+    <input type="text" id="input-calendar" placeholder="Your answer…" autocomplete="off" />
+    <button class="submit-btn" onclick="check('calendar')">Submit Answer</button>
+    <div class="notif" id="notif-calendar"></div>
+  </div>
+</div>
+
+<script>
+  // ── ANSWERS ──
+  const ANSWERS = {
+    word:     '2011-11-30',   // date input value format
+    music:    'apocalyptic',
+    painting: '5',
+    calendar: 'Balthasar'
+  };
+
+  const solved = { word: false, music: false, painting: false, calendar: false };
+
+  // ── NAVIGATION ──
+  function goTo(puzzle) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + puzzle).classList.add('active');
+    // clear previous notification & input
+    document.getElementById('notif-' + puzzle).className = 'notif';
+    document.getElementById('notif-' + puzzle).textContent = '';
+    const inp = document.getElementById('input-' + puzzle);
+    if (inp.type !== 'date') inp.value = '';
+    setTimeout(() => inp.focus(), 50);
+  }
+
+  function goHome() {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-home').classList.add('active');
+  }
+
+  // ── CHECK ANSWER ──
+  function check(puzzle) {
+    const inp   = document.getElementById('input-' + puzzle);
+    const notif = document.getElementById('notif-' + puzzle);
+    const raw   = inp.value.trim();
+    const answer = ANSWERS[puzzle];
+
+    // Calendar placeholder
+    if (answer === null) {
+      notif.textContent = '✗  No answer set yet — check back later.';
+      notif.className = 'notif wrong show';
+      return;
+    }
+
+    const correct = puzzle === 'word'
+      ? raw === answer
+      : raw.toLowerCase() === answer.toLowerCase();
+
+    if (correct) {
+      solved[puzzle] = true;
+      document.getElementById('btn-' + puzzle).classList.add('done');
+      notif.textContent = '✔  Correct! Well done.';
+      notif.className = 'notif correct show';
+      setTimeout(goHome, 1400);
+    } else {
+      notif.textContent = '✗  Incorrect — try again.';
+      notif.className = 'notif wrong show';
+    }
+  }
+
+  // Allow Enter key to submit
+  document.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const puzzle = inp.id.replace('input-', '');
+        check(puzzle);
+      }
+    });
+  });
+</script>
+</body>
+</html>
